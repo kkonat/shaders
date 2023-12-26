@@ -1,3 +1,5 @@
+precision mediump float; // Add default precision qualifier
+
 float noise(vec2 p){
     return fract(sin(dot(p.xy, vec2(12.9898,78.233))) * 43758.5453);
 }   
@@ -12,7 +14,7 @@ vec3 pal1( float t){
 mat2 rot(float a) {
     float s=sin(a),c=cos(a);
     return mat2(c,-s,s,c);
-}
+} 
 float hash21(vec2 p) {
     p = fract(p*vec2(123.34,456.21));
     p += dot(p,p+45.32);
@@ -40,24 +42,16 @@ vec4 diamond(vec2 uv, vec2 id, vec2 shft,float tm, float flare){
 }
 
 
-void main(){
-    float mult = 7.0;
-    vec2 uv = gl_FragCoord.xy / iResolution.xy; 
-    uv.x *= iResolution.x / iResolution.y;  
-    uv *= iResolution.x / iResolution.y; 
-    uv -= 0.5;
-
-    mat2 r = rot(iTime*0.05);
-    uv *= r;
-    float d;
+vec4 layer(vec2 uv, float mult, float speed){
+    float tm = iTime*speed;
+    uv *= rot(tm*0.05);
     vec2 id = floor(uv*mult);
     uv= fract(uv*mult);
 
    // shimmer effect
    // uv -= 0.5+vec2(0.5*(0.10*vec2(noise(uv*iTime*-2.0),noise(uv*iTime*10.0))));   
-    float tm = iTime*1.0;
+   
     vec2 p = uv-0.5;
-    
     
     vec4 dc = vec4(0.0);
     dc = diamond(p, id, vec2(0.0),tm,0.2);
@@ -66,5 +60,21 @@ void main(){
     dc += diamond(p, id,vec2(1.0,1.0), tm,0.2);
     
     dc /=4.0;
-    gl_FragColor = dc;
+    return  dc;
+}
+
+void main()
+{
+    float mult = 3.0;
+
+    vec2 uv = gl_FragCoord.xy / vec2(iResolution.x, iResolution.y); 
+    uv.x *= iResolution.x / iResolution.y;  
+    uv *= iResolution.x / iResolution.y; 
+    uv -= 0.5;
+    
+    float speed = 1.0;
+    vec4 c;
+    c += layer(uv, mult, speed);
+    c +=  layer(uv, mult*1.73, -speed*2.1);
+    gl_FragColor = c/1.0;
 }
